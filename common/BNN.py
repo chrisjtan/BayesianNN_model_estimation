@@ -11,6 +11,12 @@ import pickle
 
 class BNN:
     def __init__(self, lr=0.0001, dropout_p=0.1, batch_size=128, nn_type='0'):
+        """
+        :param lr: learning rate
+        :param dropout_p: dropout probability
+        :param batch_size:
+        :param nn_type: type 0: 2 hidden layers; type 1: 3 hidden layers
+        """
         self.input_dim = None
         self.output_dim = None
         self.lr = lr
@@ -60,22 +66,18 @@ class BNN:
 
     def build_input_pipeline(self,):
         """Build an Iterator switching between train and heldout data."""
-        # Build an iterator over training batches.
         training_dataset = tf.data.Dataset.from_tensor_slices((self.x_data[:self.training_size], self.y_data[:self.training_size]))
         training_batches = training_dataset.shuffle(self.training_size, reshuffle_each_iteration=True).repeat().batch(
             self.batch_size)
         training_iterator = tf.compat.v1.data.make_one_shot_iterator(training_batches)
 
-        # Build a iterator over the heldout set with batch_size=heldout_size,
-        # i.e., return the entire heldout set as a constant.
         heldout_dataset = tf.data.Dataset.from_tensor_slices\
             ((self.x_data[self.training_size: self.training_size + self.held_out_size],
               self.y_data[self.training_size: self.training_size + self.held_out_size]))
         heldout_frozen = (heldout_dataset.take(self.held_out_size).
                           repeat().batch(self.held_out_size))
         heldout_iterator = tf.compat.v1.data.make_one_shot_iterator(heldout_frozen)
-        # Combine these into a feedable iterator that can switch between training
-        # and validation inputs.
+
         handle = tf.compat.v1.placeholder(tf.string, shape=[])
         feedable_iterator = tf.compat.v1.data.Iterator.from_string_handle(
             handle, training_batches.output_types, training_batches.output_shapes)
@@ -83,6 +85,16 @@ class BNN:
         return xs, ys, handle, training_iterator, heldout_iterator
 
     def train(self, save_path, save_step=500000, var=0.00001, training_step=10000000, normalization=True, normalization_type='z_score', decay='False'):
+        """
+        :param save_path: where to save the weighs and bias as well as normalization parameters
+        :param save_step: save model per 500000(default) steps
+        :param var: the variance of bayesian nn output, should be trainable(todo)
+        :param training_step: maximum training steps
+        :param normalization: if normalize data before training
+        :param normalization_type: choose 'min_max' or 'z_score' normalization
+        :param decay: if decay learning rate while training
+        :return:
+        """
         if normalization:
             if normalization_type == 'min_max':
                 x_min_arr = np.amin(self.x_data, axis=0)

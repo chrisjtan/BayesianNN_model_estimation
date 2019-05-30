@@ -5,6 +5,8 @@ import tensorflow_probability as tfp
 import matplotlib.pyplot as plt
 from common.data_normalization import z_score_normalize, z_score_denormalize
 
+config = tf.ConfigProto(device_count={'GPU': 0})
+
 tf.keras.backend.set_floatx('float64')  # for input weights of NN
 pos_model_path = '../../../save_model/robotic_hand_simulator/d4_s1_pos'  # use to import weights and normalization arrays
 load_model_path = '../../../save_model/robotic_hand_simulator/d4_s1_load'
@@ -22,6 +24,7 @@ acts = trajectory[1]
 
 validation_data = np.asarray(gt[:-1])
 validation_data = np.append(validation_data, np.asarray(acts), axis=1)
+
 
 with open(pos_model_path+'/normalization_arr/normalization_arr', 'rb') as pickle_file:
     x_nor_arr, y_nor_arr_ang = pickle.load(pickle_file)
@@ -56,7 +59,7 @@ y_load_delta_pre = y_load_distribution.sample()
 
 
 if __name__ == "__main__":
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
         init = tf.global_variables_initializer()
         sess.run(init)
         neural_net_pos.load_weights(pos_model_path+"/weights/BNN_weights")  # load NN parameters
@@ -72,6 +75,7 @@ if __name__ == "__main__":
             (pos_delta, load_delta) = sess.run((y_pos_delta_pre, y_load_delta_pre), feed_dict={x: nor_state})
             pos_delta = z_score_denormalize(pos_delta, y_nor_arr_ang[0], y_nor_arr_ang[1])[0]  # denormalize
             load_delta = z_score_denormalize(load_delta, y_nor_arr_vel[0], y_nor_arr_vel[1])[0]
+            # load_delta = validation_data[i+1, 2:4] - validation_data[i, 2:4]
             next_pos = state[:2] + pos_delta
             next_load = state[2:4] + load_delta
             poses.append(next_pos)
