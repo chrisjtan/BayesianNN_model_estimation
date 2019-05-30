@@ -65,7 +65,7 @@ class BNN:
         self.training_size = len(x_data) - self.held_out_size
 
     def build_input_pipeline(self,):
-        """Build an Iterator switching between train and heldout data."""
+        """Build an Iterator switching between train and heldout data. This shuffle part comes from tensorflow tutorial"""
         training_dataset = tf.data.Dataset.from_tensor_slices((self.x_data[:self.training_size], self.y_data[:self.training_size]))
         training_batches = training_dataset.shuffle(self.training_size, reshuffle_each_iteration=True).repeat().batch(
             self.batch_size)
