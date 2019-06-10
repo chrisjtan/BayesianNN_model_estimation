@@ -14,5 +14,5 @@ if __name__ == "__main__":
     neural_network = BNN(nn_type='0')
     neural_network.add_dataset(x_data, y_data, held_out_percentage=0.1)
     neural_network.build_neural_net()
-    save_path = '../../../save_model/robotic_hand_real_s4_a6/pos'
+    save_path = '../../../save_model/robotic_hand_real_s4_a6/load'
     neural_network.train(save_path=save_path, normalization=True, normalization_type='z_score', decay='True')
